@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
@@ -40,7 +41,7 @@ def get_embedding(img_path):
     try:
         face_img = extract_face(img_path)
     except Exception as e:
-        print(f"Face not found in {img_path}: {e}")
+        print(f"Face not found in {img_path}: {e}", end="")
         return None
     x = image.img_to_array(face_img)
     x = np.expand_dims(x, axis=0)
@@ -79,17 +80,22 @@ def find_person(test_embedding, database, threshold=SIMILARITY_THRESHOLD):
 
 if __name__ == "__main__":
     dataset_path = "dataset"  
-    test_img_path = "test/test.png"  
 
-    print("Building database...")
+    if len(sys.argv) < 2:
+        print("Error: No image path provided", end="")
+        sys.exit(1)
+
+    img_path = sys.argv[1]
+
+    if not os.path.exists(img_path):
+        print("Error: File not found", end="")
+        sys.exit(1)
+
     database = build_database(dataset_path)
-    print("Database built.")
-
-    print("Processing test image...")
-    test_emb = get_embedding(test_img_path)
+    test_emb = get_embedding(img_path)
     if test_emb is not None:
         person, similarity = find_person(test_emb, database)
         real_name = name_map.get(person, person)
-        print(f"Predicted person: {real_name}, similarity: {similarity:.4f}")
+        print(real_name, end="")
     else:
-        print("No face detected in test image.")
+        print("No face detected in test image.", end="")
